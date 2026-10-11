@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Match Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f5;--panel:#fff;--ink:#14213d;--mute:#5d6b82;--line:#d6dce6;--home:#1f8a4c;--away:#c2410c;--draw:#6b7a99;--bar:#e3e8f0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1624;--panel:#18223a;--ink:#e8edf7;--mute:#92a0ba;--line:#2a3855;--home:#3fb871;--away:#f0763a;--draw:#8c9bbd;--bar:#243253}}
+:root[data-theme="dark"]{--bg:#0f1624;--panel:#18223a;--ink:#e8edf7;--mute:#92a0ba;--line:#2a3855;--home:#3fb871;--away:#f0763a;--draw:#8c9bbd;--bar:#243253}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 Barlow,system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+h1,h2,.num{font-family:"Barlow Condensed",Impact,sans-serif;font-weight:700;letter-spacing:.01em}
+h1{font-size:34px;margin:0 0 4px}
+h2{font-size:22px;margin:0 0 10px}
+p.sub{margin:0 0 20px;color:var(--mute);max-width:62ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.names{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+.names input{font:700 22px "Barlow Condensed",sans-serif;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.names input:first-child{border-left:5px solid var(--home)}
+.names input:last-child{border-left:5px solid var(--away);text-align:right}
+.grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:6px 10px;align-items:center}
+.grid .hd{color:var(--mute);font-size:13px;font-weight:600}
+.grid label{font-size:14px}
+.grid small{display:block;color:var(--mute);font-size:12px}
+input[type=number]{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:500 15px Barlow,sans-serif}
+input:focus-visible,button:focus-visible{outline:2px solid var(--home);outline-offset:1px}
+.sep{grid-column:1/-1;border-top:1px solid var(--line);margin:8px 0 2px;padding-top:8px;font-weight:600}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.opts label{display:block;font-size:14px;font-weight:500;margin-bottom:4px}
+input[type=range]{width:100%;accent-color:var(--home)}
+.score{display:flex;justify-content:center;align-items:baseline;gap:18px;margin:6px 0 2px}
+.score .num{font-size:76px;line-height:1}
+.score .dash{font-size:40px;color:var(--mute)}
+.xg{text-align:center;color:var(--mute);margin-bottom:14px}
+.split{display:flex;height:34px;border-radius:6px;overflow:hidden;font:700 16px "Barlow Condensed",sans-serif;color:#fff}
+.split div{display:flex;align-items:center;justify-content:center;min-width:0;transition:width .25s}
+.split .h{background:var(--home)}.split .d{background:var(--draw)}.split .a{background:var(--away)}
+.legend{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin-top:4px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.row{display:grid;grid-template-columns:78px 1fr 46px 54px;gap:8px;align-items:center;margin:6px 0;font-size:14px}
+.row .t{background:var(--bar);height:10px;border-radius:5px;overflow:hidden}
+.row .t i{display:block;height:100%;background:var(--home);transition:width .25s}
+.row .p{font-weight:600;text-align:right}.row .o{color:var(--mute);text-align:right;font-size:13px}
+.row.over .t i{background:var(--away)}
+.cap{color:var(--mute);font-size:12px;margin:0 0 4px;display:grid;grid-template-columns:78px 1fr 46px 54px;gap:8px}
+.cap span:nth-child(3),.cap span:nth-child(4){text-align:right}
+.scores{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);border-radius:6px;padding:6px 10px;text-align:center;min-width:64px}
+.chip b{font:700 20px "Barlow Condensed",sans-serif;display:block}
+.chip span{font-size:12px;color:var(--mute)}
+.note{font-size:12.5px;color:var(--mute);max-width:78ch}
+.pick{display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;background:var(--bar);font-size:13.5px;font-weight:600}
+button{font:600 14px Barlow,sans-serif;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:500 15px Barlow,sans-serif}
+.dim{opacity:.4}
+.vt{width:100%;min-width:520px;border-collapse:collapse;font-size:14px}
+.vt th{text-align:left;font-weight:600;color:var(--mute);font-size:13px;padding:4px 6px}
+.vt td{padding:4px 6px;border-top:1px solid var(--line)}
+.vt tr.gr th{padding-top:14px;color:var(--ink);font:700 17px "Barlow Condensed",sans-serif}
+.vt input{width:84px;padding:5px 6px}
+.vt tr.val{background:color-mix(in srgb,var(--home) 16%,transparent)}
+.vt tr.val td:nth-child(5){font-weight:700;color:var(--home)}
+.vt tr.neg td:nth-child(5){color:var(--mute)}
+@media(max-width:560px){.score .num{font-size:60px}.grid{grid-template-columns:1.3fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>Match Predictor</h1>
+<p class="sub">Enter season averages and recent form for each team. The model blends them, then turns the result into probabilities for score, corners, cards and over/under lines.</p>
+
+<section class="panel">
+  <div class="opts" style="margin-bottom:14px">
+    <div><label for="mode">Inputs</label><select id="mode"><option value="r">Fitted team ratings</option><option value="m">Manual averages</option></select><div class="note" id="rnote" style="margin-top:4px"></div></div>
+    <div id="pick"><label for="hs">Home team</label><select id="hs"></select><label for="as" style="margin-top:8px">Away team</label><select id="as"></select></div>
+  </div>
+  <div class="names"><input id="hn" value="Home FC" aria-label="Home team"><input id="an" value="Away United" aria-label="Away team"></div>
+  <div class="grid" id="inputs"></div>
+</section>
+
+<section class="panel">
+  <h2>Model settings</h2>
+  <div class="opts">
+    <div><label>Weight on recent form: <b id="wv">20%</b></label><input type="range" id="w" min="0" max="100" value="20"><div class="note">0% = season only, 100% = last 5 matches only.</div></div>
+    <div><label>Weight on head-to-head goals: <b id="hv">10%</b></label><input type="range" id="h" min="0" max="40" value="10"><div class="note">Uses the averages below.</div></div>
+    <div><label>Head-to-head avg goals (home / away)</label><div style="display:flex;gap:8px"><input type="number" step="0.1" id="h2h" value="1.4"><input type="number" step="0.1" id="h2a" value="1.1"></div></div>
+    <div><label>Referee cards per match (0 to ignore)</label><input type="number" step="0.1" id="ref" value="4.6"></div>
+  </div>
+</section>
+
+<section class="panel" id="out" aria-live="polite"></section>
+
+<section class="panel">
+  <h2>Bookmaker odds and value</h2>
+  <p class="note" style="margin:0 0 12px">Enter the decimal odds you are offered. Edge is model probability × odds − 1. Rows turn green when the edge beats your minimum.</p>
+  <div class="opts" style="margin-bottom:12px">
+    <div><label for="thr">Minimum edge %</label><input type="number" id="thr" value="5" step="1" min="0"><div class="note">Keep this well above 0: the model has estimation error.</div></div>
+    <div><label for="kel">Kelly fraction %</label><input type="number" id="kel" value="25" step="5" min="0" max="100"><div class="note">Stake is shown as % of bankroll. 25% = quarter Kelly.</div></div>
+  </div>
+  <div id="best" class="note" style="margin-bottom:10px"></div>
+  <div style="overflow-x:auto"><table class="vt" id="vt"></table></div>
+</section>
+
+<button id="theme">Switch theme</button>
+<p class="note" style="margin-top:14px">Goals use independent Poisson distributions with a small low-score correction (Dixon-Coles style). Corners and cards use Poisson totals, which understate real-world variance a little. Probabilities are estimates, not guarantees. In backtests the ratings were useful for match result and cards, but over/under goals was no better than a naive baseline, and no betting edge was found against bookmaker odds. Compare fair odds with a bookmaker's prices before betting, and only stake what you can afford to lose.</p>
+</main>
+<script>
+const rows=[
+ ["Goals scored per match","Season, home team at home / away team away",1.7,1.2,"gf"],
+ ["Goals conceded per match","Season, same venue split",1.0,1.5,"ga"],
+ ["Goals scored, last 5","Recent form",2.0,0.8,"rgf"],
+ ["Goals conceded, last 5","Recent form",0.8,1.8,"rga"],
+ ["sep","Corners"],
+ ["Corners won per match","Season",6.2,4.6,"cf"],
+ ["Corners conceded per match","Season",4.1,5.8,"ca"],
+ ["Corners won, last 5","Recent form",6.8,4.0,"rcf"],
+ ["Corners conceded, last 5","Recent form",3.8,6.2,"rca"],
+ ["sep","Cards"],
+ ["Cards per match","Yellow = 1, red = 2 (booking points)",1.9,2.3,"cd"],
+ ["Cards, last 5","Recent form",1.6,2.6,"rcd"]
+];
+const $=id=>document.getElementById(id);
+const g=$("inputs");
+g.innerHTML='<div class="hd"></div><div class="hd" id="hh">Home</div><div class="hd" id="ah" style="text-align:right">Away</div>';
+rows.forEach(r=>{
+  if(r[0]==="sep"){g.insertAdjacentHTML("beforeend",`<div class="sep">${r[1]}</div>`);return}
+  g.insertAdjacentHTML("beforeend",`<label for="${r[4]}_h">${r[0]}<small>${r[1]}</small></label><input type="number" step="0.1" min="0" id="${r[4]}_h" value="${r[2]}"><input type="number" step="0.1" min="0" id="${r[4]}_a" value="${r[3]}">`);
+});
+const v=id=>Math.max(0,parseFloat($(id).value)||0);
+const RATINGS=/*RATINGS*/{"asof":"20 Sep 2026","teams":{"Arsenal":{"ga":0.269,"gd":0.507,"ca":0.095,"cd":0.24,"ka":-0.229,"kd":-0.155},"Aston Villa":{"ga":0.099,"gd":0.009,"ca":0.014,"cd":0.024,"ka":-0.068,"kd":-0.156},"Bournemouth":{"ga":0.102,"gd":0.073,"ca":0.061,"cd":-0.016,"ka":0.184,"kd":-0.036},"Brentford":{"ga":0.165,"gd":0.108,"ca":-0.033,"cd":-0.074,"ka":-0.055,"kd":0.029},"Brighton":{"ga":0.284,"gd":0.129,"ca":0.024,"cd":0.032,"ka":0.051,"kd":-0.089},"Chelsea":{"ga":0.207,"gd":-0.078,"ca":0.174,"cd":0.078,"ka":0.18,"kd":-0.162},"Coventry":{"ga":-0.488,"gd":-0.122,"ca":-0.031,"cd":0.038,"ka":-0.159,"kd":0.061},"Crystal Palace":{"ga":-0.087,"gd":-0.069,"ca":-0.129,"cd":-0.025,"ka":-0.013,"kd":0.072},"Everton":{"ga":-0.084,"gd":0.167,"ca":-0.065,"cd":-0.019,"ka":0.049,"kd":0.129},"Fulham":{"ga":-0.089,"gd":0.051,"ca":0.05,"cd":-0.035,"ka":-0.029,"kd":0.145},"Hull":{"ga":-0.08,"gd":0.307,"ca":-0.07,"cd":-0.035,"ka":0.203,"kd":0.212},"Ipswich":{"ga":-0.053,"gd":-0.343,"ca":-0.1,"cd":-0.066,"ka":0.048,"kd":-0.049},"Leeds":{"ga":0.01,"gd":0.163,"ca":-0.063,"cd":-0.05,"ka":-0.124,"kd":-0.042},"Liverpool":{"ga":0.238,"gd":0.126,"ca":0.138,"cd":0.118,"ka":-0.118,"kd":-0.07},"Man City":{"ga":0.432,"gd":0.318,"ca":0.22,"cd":0.161,"ka":-0.133,"kd":-0.032},"Man United":{"ga":0.239,"gd":0.053,"ca":0.079,"cd":0.03,"ka":-0.05,"kd":-0.111},"Newcastle":{"ga":0.191,"gd":-0.052,"ca":0.088,"cd":-0.014,"ka":-0.02,"kd":-0.18},"Nott'm Forest":{"ga":-0.021,"gd":0.128,"ca":-0.039,"cd":-0.004,"ka":-0.038,"kd":0.008},"Sunderland":{"ga":-0.082,"gd":-0.002,"ca":-0.127,"cd":0.009,"ka":0.136,"kd":0.018},"Tottenham":{"ga":-0.122,"gd":-0.089,"ca":0.144,"cd":0.035,"ka":0.123,"kd":-0.05}},"g":{"mu":0.2045,"ha":0.1774},"c":{"mu":1.5136,"ha":0.1508},"k":{"mu":0.7579,"ha":-0.1834}}/*END*/;
+const fact=n=>{let f=1;for(let i=2;i<=n;i++)f*=i;return f};
+const pois=(k,l)=>Math.exp(-l)*Math.pow(l,k)/fact(k);
+const cdf=(k,l)=>{let s=0;for(let i=0;i<=k;i++)s+=pois(i,l);return Math.min(1,s)};
+const pct=x=>(x*100).toFixed(0)+"%";
+const odds=x=>x>0.005?(1/x).toFixed(2):"–";
+const mix=(s,r,w)=>(1-w)*s+w*r;
+
+function calc(){
+  const w=$("w").value/100,hw=$("h").value/100;
+  $("wv").textContent=$("w").value+"%";$("hv").textContent=$("h").value+"%";
+  const rm=$("mode").value==="r";
+  const hn=rm?$("hs").value:($("hn").value||"Home"),an=rm?$("as").value:($("an").value||"Away");
+  $("hh").textContent=hn;$("ah").textContent=an;
+  const T=s=>({gf:mix(v("gf_"+s),v("rgf_"+s),w),ga:mix(v("ga_"+s),v("rga_"+s),w),cf:mix(v("cf_"+s),v("rcf_"+s),w),ca:mix(v("ca_"+s),v("rca_"+s),w),cd:mix(v("cd_"+s),v("rcd_"+s),w)});
+  const H=T("h"),A=T("a");
+  let lh=(H.gf+A.ga)/2,la=(A.gf+H.ga)/2;
+  lh=mix(lh,v("h2h"),hw);la=mix(la,v("h2a"),hw);
+  lh=Math.max(.15,lh);la=Math.max(.15,la);
+  let cmR=null,cdR=null;
+  if(rm){const a=R.teams[$("hs").value],b=R.teams[$("as").value],gm=R.g,cq=R.c,km=R.k;
+    lh=Math.max(.15,Math.exp(gm.mu+gm.ha+a.ga-b.gd));la=Math.max(.15,Math.exp(gm.mu+b.ga-a.gd));
+    cmR=Math.exp(cq.mu+cq.ha+a.ca-b.cd)+Math.exp(cq.mu+b.ca-a.cd);
+    cdR=Math.exp(km.mu+km.ha+a.ka-b.kd)+Math.exp(km.mu+b.ka-a.kd);}
+  // score matrix
+  const N=9,rho=-0.08,M=[];let tot=0;
+  for(let i=0;i<=N;i++){M[i]=[];for(let j=0;j<=N;j++){
+    let t=1;
+    if(i===0&&j===0)t=1-lh*la*rho;else if(i===0&&j===1)t=1+lh*rho;else if(i===1&&j===0)t=1+la*rho;else if(i===1&&j===1)t=1-rho;
+    M[i][j]=pois(i,lh)*pois(j,la)*t;tot+=M[i][j];}}
+  let ph=0,pd=0,pa=0,btts=0;const all=[];const tg=Array(2*N+1).fill(0);
+  for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){const p=M[i][j]/tot;
+    if(i>j)ph+=p;else if(i===j)pd+=p;else pa+=p;
+    if(i>0&&j>0)btts+=p;all.push([i,j,p]);tg[i+j]+=p;}
+  all.sort((a,b)=>b[2]-a[2]);
+  const ou=l=>{let u=0;for(let k=0;k<=Math.floor(l);k++)u+=tg[k];return u};
+  const cm=rm?cmR:H.cf*0.5+A.ca*0.5+A.cf*0.5+H.ca*0.5;
+  let cardM=rm?cdR:H.cd+A.cd;const rf=v("ref");if(rf>0)cardM=mix(cardM,rf,.3);
+  const bar=(label,pOver,lineKey)=>{
+    const u=1-pOver;
+    return `<div class="row over"><span>Over ${label}</span><div class="t"><i style="width:${pOver*100}%"></i></div><span class="p">${pct(pOver)}</span><span class="o">${odds(pOver)}</span></div>
+    <div class="row"><span>Under ${label}</span><div class="t"><i style="width:${u*100}%"></i></div><span class="p">${pct(u)}</span><span class="o">${odds(u)}</span></div>`};
+  const cap='<div class="cap"><span></span><span></span><span>Prob.</span><span>Fair odds</span></div>';
+  const goalLines=[1.5,2.5,3.5].map(l=>bar(l,1-ou(l))).join("");
+  const cornerLines=[8.5,9.5,10.5,11.5].map(l=>bar(l,1-cdf(Math.floor(l),cm))).join("");
+  const cardLines=[3.5,4.5,5.5].map(l=>bar(l,1-cdf(Math.floor(l),cardM))).join("");
+  const P={h:ph,d:pd,a:pa,bt:btts,bn:1-btts};
+  [1.5,2.5,3.5].forEach(l=>{P["g"+l+"o"]=1-ou(l);P["g"+l+"u"]=ou(l)});
+  [8.5,9.5,10.5,11.5].forEach(l=>{const u=cdf(Math.floor(l),cm);P["c"+l+"o"]=1-u;P["c"+l+"u"]=u});
+  [3.5,4.5,5.5].forEach(l=>{const u=cdf(Math.floor(l),cardM);P["k"+l+"o"]=1-u;P["k"+l+"u"]=u});
+  updateValue(P,hn,an);
+  const top=all[0];
+  const picks=[];
+  picks.push(ph>pa&&ph>pd?hn+" win":pa>ph&&pa>pd?an+" win":"Draw");
+  picks.push((1-ou(2.5)>.5?"Over":"Under")+" 2.5 goals");
+  picks.push(btts>.5?"Both teams score":"Not both teams score");
+  picks.push((1-cdf(9,cm)>.5?"Over":"Under")+" 9.5 corners");
+  picks.push((1-cdf(4,cardM)>.5?"Over":"Under")+" 4.5 cards");
+  $("out").innerHTML=`
+  <h2 style="text-align:center">Predicted score</h2>
+  <div class="score"><span class="num">${top[0]}</span><span class="dash">–</span><span class="num">${top[1]}</span></div>
+  <div class="xg">Most likely scoreline (${pct(top[2])}). Expected goals ${lh.toFixed(2)} – ${la.toFixed(2)}</div>
+  <div class="split"><div class="h" style="width:${ph*100}%">${pct(ph)}</div><div class="d" style="width:${pd*100}%">${pct(pd)}</div><div class="a" style="width:${pa*100}%">${pct(pa)}</div></div>
+  <div class="legend"><span>${hn} win (${odds(ph)})</span><span>Draw (${odds(pd)})</span><span>${an} win (${odds(pa)})</span></div>
+  <div style="margin:16px 0 4px">${picks.map(p=>`<span class="pick">${p}</span>`).join("")}</div>
+  <div class="cols" style="margin-top:12px">
+    <div><h2>Goals</h2>${cap}${goalLines}<div class="row"><span>Both score</span><div class="t"><i style="width:${btts*100}%"></i></div><span class="p">${pct(btts)}</span><span class="o">${odds(btts)}</span></div></div>
+    <div><h2>Corners</h2><div class="note" style="margin-bottom:6px">Expected total ${cm.toFixed(1)}</div>${cap}${cornerLines}</div>
+    <div><h2>Cards</h2><div class="note" style="margin-bottom:6px">Expected booking points ${cardM.toFixed(1)}</div>${cap}${cardLines}</div>
+  </div>
+  <h2 style="margin-top:16px">Likeliest scorelines</h2>
+  <div class="scores">${all.slice(0,6).map(s=>`<div class="chip"><b>${s[0]}–${s[1]}</b><span>${pct(s[2])}</span></div>`).join("")}</div>`;
+}
+const MK=[];let curG="";
+const grp=t=>{curG=t;MK.push({t})};
+const add=(k,l)=>MK.push({k,l,g:curG});
+grp("Match result");add("h","");add("d","Draw");add("a","");
+grp("Goals");[1.5,2.5,3.5].forEach(l=>{add("g"+l+"o","Over "+l);add("g"+l+"u","Under "+l)});add("bt","Both teams score");add("bn","Not both score");
+grp("Corners");[8.5,9.5,10.5,11.5].forEach(l=>{add("c"+l+"o","Over "+l);add("c"+l+"u","Under "+l)});
+grp("Cards");[3.5,4.5,5.5].forEach(l=>{add("k"+l+"o","Over "+l);add("k"+l+"u","Under "+l)});
+$("vt").innerHTML="<tr><th>Market</th><th>Model</th><th>Fair odds</th><th>Bookie odds</th><th>Edge</th><th>Stake</th></tr>"+MK.map(m=>m.t?`<tr class="gr"><th colspan="6">${m.t}</th></tr>`:`<tr id="r_${m.k}"><td id="l_${m.k}"></td><td id="p_${m.k}"></td><td id="f_${m.k}"></td><td><input type="number" step="0.01" min="1" placeholder="2.10" id="o_${m.k}" aria-label="Bookmaker odds"></td><td id="e_${m.k}">–</td><td id="s_${m.k}"></td></tr>`).join("");
+function updateValue(P,hn,an){
+  const th=(parseFloat($("thr").value)||0)/100,kf=(parseFloat($("kel").value)||0)/100,best=[];
+  MK.forEach(m=>{if(!m.k)return;const k=m.k,p=P[k];
+    const name=k==="h"?hn+" win":k==="a"?an+" win":m.l;
+    $("l_"+k).textContent=name;$("p_"+k).textContent=pct(p);$("f_"+k).textContent=odds(p);
+    const o=parseFloat($("o_"+k).value),r=$("r_"+k);
+    if(!(o>1)){$("e_"+k).textContent="–";$("s_"+k).textContent="";r.className="";return}
+    const e=p*o-1;
+    $("e_"+k).textContent=(e>=0?"+":"")+(e*100).toFixed(1)+"%";
+    const isV=e>0&&e>=th;
+    r.className=isV?"val":e<0?"neg":"";
+    $("s_"+k).textContent=e>0?(kf*e/(o-1)*100).toFixed(1)+"%":"";
+    if(isV)best.push([e,("hda".includes(k)?name:m.g+": "+name)+" @ "+o.toFixed(2)+" (+"+(e*100).toFixed(1)+"%)"]);
+  });
+  best.sort((a,b)=>b[0]-a[0]);
+  $("best").innerHTML=best.length?"<b>Value found:</b><br>"+best.map(b=>`<span class="pick">${b[1]}</span>`).join(""):"No value at the odds entered so far. Fill in the bookmaker prices below.";
+}
+const R=RATINGS,tn=Object.keys(R.teams).sort();
+["hs","as"].forEach((id,k)=>{$(id).innerHTML=tn.map(t=>`<option>${t}</option>`).join("");$(id).selectedIndex=Math.max(0,tn.indexOf(k?"Man City":"Arsenal"))});
+function sync(){const r=$("mode").value==="r";
+  if(r){$("hn").value=$("hs").value;$("an").value=$("as").value}
+  $("inputs").classList.toggle("dim",r);$("pick").style.display=r?"":"none";
+  $("rnote").textContent=r?"Ratings fitted on Premier League matches up to "+R.asof+", with recent matches counting more. The stat boxes below, the form slider and head-to-head are not used.":"Type averages by hand. Season and recent form are blended using the form slider."}
+["mode","hs","as"].forEach(id=>$(id).addEventListener("change",()=>{sync();calc()}));
+sync();
+document.addEventListener("input",calc);
+$("theme").onclick=()=>{const r=document.documentElement;const d=getComputedStyle(r).getPropertyValue("--bg").trim()==="#0f1624";r.dataset.theme=d?"light":"dark"};
+calc();
+</script>
+</body>
+</html>
